@@ -1,15 +1,4 @@
-## Needed to start systemd
-if [[ ! -v INSIDE_GENIE ]]; then
-  read -t 3 -p "Preparing to enter genie bottle (in 3s); abort? " response
-  echo
-  response=${response:=n}
-
-  if [[ $response != "y" ]]; then
-    echo "Starting genie:"
-    exec /usr/bin/genie -s
-  fi
-fi
-
+# shellcheck shell=bash
 # ~/.bashrc: executed by bash(1) for non-login shells.
 # see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
 # for examples
@@ -86,6 +75,7 @@ esac
 
 # enable color support of ls and also add handy aliases
 if [ -x /usr/bin/dircolors ]; then
+    # shellcheck disable=SC2015
     test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
     alias ls='ls --color=auto'
     #alias dir='dir --color=auto'
@@ -114,6 +104,7 @@ alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo
 # See /usr/share/doc/bash-doc/examples in the bash-doc package.
 
 if [ -f ~/.bash_aliases ]; then
+    # shellcheck source=/dev/null
     . ~/.bash_aliases
 fi
 
@@ -128,48 +119,16 @@ if ! shopt -oq posix; then
   fi
 fi
 
-## Custom Stuff
+ssh-add -l &>/dev/null
+if [ "$?" == 2 ]; then
+  test -r ~/.gnome-keyring && \
+    source ~/.gnome-keyring && \
+    export DBUS_SESSION_BUS_ADDRESS GNOME_KEYRING_CONTROL SSH_AUTH_SOCK GPG_AGENT_INFO GNOME_KEYRING_PID
 
-## Send gui to windows mobaxterm
-export DISPLAY="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
-
-## Make vscode be quiet about windows
-export DONT_PROMPT_WSL_INSTALL=yes
-
-## Make SSH work
-eval `ssh-agent -s`
-ssh-add ~/.ssh/id_rsa
-
-## Setup for podman
-if [[ -z "$XDG_RUNTIME_DIR" ]]; then
-  export XDG_RUNTIME_DIR=/run/user/$UID
-  if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
-    export XDG_RUNTIME_DIR=/tmp/$USER-runtime
-    if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
-      mkdir -m 0700 "$XDG_RUNTIME_DIR"
-    fi
+  ssh-add -l &>/dev/null
+  if [ "$?" == 2 ]; then
+    (umask 066; echo `dbus-launch --sh-syntax` > ~/.gnome-keyring; gnome-keyring-daemon >> ~/.gnome-keyring)
+    source ~/.gnome-keyring && \
+    export DBUS_SESSION_BUS_ADDRESS GNOME_KEYRING_CONTROL SSH_AUTH_SOCK GPG_AGENT_INFO GNOME_KEYRING_PID
   fi
 fi
-
-## Add path to home bin dir
-HOME_BIN="~/bin"
-PATH=$HOME_BIN:$PATH
-
-if command -v podman &> /dev/null
-then
-    alias docker=podman
-fi
-
-
-## Possibly needed for gnome-keyring stuff on wsl2
-# dbus-update-activation-environment --systemd DISPLAY
-# printenv
-
-# Install pyenv
-export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
-
-# Pretty shell
-eval "$(oh-my-posh init bash --config ~/.poshthemes/atomic.omp.json)"
-

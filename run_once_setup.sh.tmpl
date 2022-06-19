@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# {{ if eq .chezmoi.username "shadycuz" -}}
+sudo apt update
+#	{{- if contains "WSL" .chezmoi.kernel.osrelease }}
+
+# Install systemd-genie so we have working systemd (in case we need it for something)
+# These are the pre-reqs for genie
+sudo apt install lsb-release
+sudo wget -O /etc/apt/trusted.gpg.d/wsl-transdebian.gpg https://arkane-systems.github.io/wsl-transdebian/apt/wsl-transdebian.gpg
+sudo chmod a+r /etc/apt/trusted.gpg.d/wsl-transdebian.gpg
+WSL_REPOS="deb https://arkane-systems.github.io/wsl-transdebian/apt/ $(lsb_release -cs) main\ndeb-src https://arkane-systems.github.io/wsl-transdebian/apt/ $(lsb_release -cs) main"
+echo "${WSL_REPOS}" | sudo tee -a /etc/apt/sources.list.d/wsl-transdebian.list
+
+# Install genie
+sudo apt update
+sudo apt install -y systemd-genie
+# Initialize genie, thankfully this is idempotent
+genie -i
+
+# Genie will take a long time and spit out lots of warnings the first time its loaded
+# From inside the genie bottle run...
+# sudo systemctl set-default multi-user.target
+# Then disable these services
+# https://github.com/arkane-systems/genie/wiki/Systemd-units-known-to-be-problematic-under-WSL
+
+# This is needed to fix the SSH agent service
+sudo ssh-keygen -A
+
+# Needed to fix the filesystem mount service
+sudo e2label /dev/sdb cloudimg-rootfs
+#	{{- end }}
+
+# Install pyenv to manage python versions on the system
+if ! command -v pyenv &> /dev/null
+then
+    echo 'Installing pyenv'
+    curl -L https://github.com/pyenv/pyenv-installer/raw/master/bin/pyenv-installer | bash
+fi
+
+# Install oh my posh so we have a nice looking shell
+if ! command -v /usr/local/bin/oh-my-posh &> /dev/null
+then
+    echo 'Installing oh-my-posh'
+    sudo wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/posh-linux-amd64 -O /usr/local/bin/oh-my-posh
+    sudo chmod +x /usr/local/bin/oh-my-posh
+fi
+
+# Install fonts for oh my posh
+sudo apt install unzip fontconfig
+
+# It's like 60 megs, so we will want to make sure they are not already installed
+if ! fc-list | grep -q 'Meslo'; then
+  echo 'Installing Meslo Font'
+  oh-my-posh font install Meslo
+fi
+
+if [ ! -d "${HOME}/.poshthemes" ]; then
+echo 'Installing themes for oh-my-posh'
+mkdir ~/.poshthemes
+wget https://github.com/JanDeDobbeleer/oh-my-posh/releases/latest/download/themes.zip -O ~/.poshthemes/themes.zip
+unzip ~/.poshthemes/themes.zip -d ~/.poshthemes
+chmod u+rw ~/.poshthemes/*.omp.*
+rm ~/.poshthemes/themes.zip
+fi
+
+# I usually dont use SNAP but it does keep vscode automaticly updated <3
+if ! command -v code &> /dev/null
+then
+    # Chrome is kinda a pre-req but I installed in manually (just to sign into vscode sync)
+    echo 'Installing vscode prereqs'
+    sudo apt install gnome-keyring
+    echo 'Installing vscode'
+    sudo snap install --classic code
+fi
+# {{ end -}}

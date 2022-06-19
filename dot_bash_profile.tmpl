@@ -1,0 +1,100 @@
+# shellcheck shell=bash
+
+# If not interactive then return
+[ -z "$PS1" ] && return
+
+# Start genie to start systemd
+if [[ ! -v INSIDE_GENIE ]]; then
+  read -t 3 -r -p "Preparing to enter genie bottle (in 3s); abort? " response
+  echo
+  response=${response:=n}
+
+  if [[ $response != "y" ]]; then
+    echo "Starting genie:"
+    exec /usr/bin/genie -s
+  fi
+fi
+
+# Stole all of this from ~/.profile
+# ~/.profile: executed by the command interpreter for login shells.
+# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists.
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+    # shellcheck source=dot_bashrc
+	  . "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/bin" ] ; then
+    PATH="$HOME/bin:$PATH"
+fi
+
+# set PATH so it includes user's private bin if it exists
+if [ -d "$HOME/.local/bin" ] ; then
+    PATH="$HOME/.local/bin:$PATH"
+fi
+
+## Custom Stuff
+# {{ if eq .chezmoi.username "shadycuz" -}}
+
+#        {{- if contains "WSL" .chezmoi.kernel.osrelease }}
+## Send gui to windows mobaxterm
+DISPLAY_VALUE="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
+export DISPLAY=$DISPLAY_VALUE
+
+## Make vscode be quiet about windows
+export DONT_PROMPT_WSL_INSTALL=yes
+
+## Make SSH work
+# eval "$(ssh-agent -s)"
+# ssh-add ~/.ssh/id_rsa
+#        {{- end }}
+
+## Setup for podman
+if [[ -z "$XDG_RUNTIME_DIR" ]]; then
+  export XDG_RUNTIME_DIR=/run/user/$UID
+  if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+    export XDG_RUNTIME_DIR=/tmp/$USER-runtime
+    if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
+      mkdir -m 0700 "$XDG_RUNTIME_DIR"
+    fi
+  fi
+fi
+
+if command -v podman &> /dev/null
+then
+    alias docker=podman
+fi
+
+# Install pyenv
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init --path)"
+eval "$(pyenv virtualenv-init -)"
+
+# Pretty shell
+eval "$(oh-my-posh init bash --config ~/.poshthemes/atomic.omp.json)"
+
+# Set vscode as default editor
+export EDITOR="code --wait"
+
+# This sets up gnome keyring stuff so visual studio code can cache login
+# for settings sync
+# This is one time setup
+# sudo dbus-update-activation-environment --systemd DISPLAY
+
+# Unsure if the rest is needed (doesnt seem to be)
+# eval "$(gnome-keyring-daemon --start)"
+# eval "$(gnome-keyring-daemon --daemonize --login)"
+# export SSH_AUTH_SOCK
+# {{ end -}}
