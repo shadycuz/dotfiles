@@ -61,21 +61,6 @@ export DONT_PROMPT_WSL_INSTALL=yes
 # ssh-add ~/.ssh/id_rsa
 #        {{- end }}
 
-## Setup for podman
-if [[ -z "$XDG_RUNTIME_DIR" ]]; then
-  export XDG_RUNTIME_DIR=/run/user/$UID
-  if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
-    export XDG_RUNTIME_DIR=/tmp/$USER-runtime
-    if [[ ! -d "$XDG_RUNTIME_DIR" ]]; then
-      mkdir -m 0700 "$XDG_RUNTIME_DIR"
-    fi
-  fi
-fi
-
-if command -v podman &> /dev/null
-then
-    alias docker=podman
-fi
 
 # Install pyenv
 export PATH="$HOME/.pyenv/bin:$PATH"
@@ -97,4 +82,11 @@ export EDITOR="code --wait"
 # eval "$(gnome-keyring-daemon --start)"
 # eval "$(gnome-keyring-daemon --daemonize --login)"
 # export SSH_AUTH_SOCK
-# {{ end -}}
+# {{ end }}
+
+if command -v kubectl &> /dev/null
+then
+    echo 'Setting up kubecompletion'
+    # shellcheck source=/dev/null
+    source <(kubectl completion bash)
+fi
