@@ -86,7 +86,6 @@ export EDITOR="code --wait"
 
 if command -v kubectl &> /dev/null
 then
-    echo 'Setting up kubecompletion'
     # shellcheck source=/dev/null
     source <(kubectl completion bash)
 fi
