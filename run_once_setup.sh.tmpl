@@ -15,6 +15,10 @@ fi
 
 if ! command -v genie &> /dev/null
 then
+    sudo systemctl set-default multi-user.target
+
+    sudo systemctl disable multipathd.socket
+
     echo 'Installing systemd-genie'
     sudo apt update
     sudo apt install -y systemd-genie
