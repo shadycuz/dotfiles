@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# {{ if eq .chezmoi.username "shadycuz" -}}
+# {{- if eq .chezmoi.username "shadycuz" }}
 sudo apt update
 #	{{- if contains "WSL" .chezmoi.kernel.osrelease }}
 
