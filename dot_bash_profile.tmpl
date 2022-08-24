@@ -53,6 +53,9 @@ fi
 DISPLAY_VALUE="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
 export DISPLAY=$DISPLAY_VALUE
 
+# Add any windows binarys to path
+PATH=/mnt/c/linux/bin:$PATH
+
 ## Make vscode be quiet about windows
 export DONT_PROMPT_WSL_INSTALL=yes
 
@@ -89,3 +92,6 @@ then
     # shellcheck source=/dev/null
     source <(kubectl completion bash)
 fi
+
+# Add the python local bin directory to path
+PATH=$(python3 -m site --user-base)/bin:$PATH
