@@ -119,6 +119,9 @@ if ! shopt -oq posix; then
   fi
 fi
 
+## Needed to make SSH work correctly in a vscode devcontainer.
+eval "$(ssh-agent -s)"
+
 ## These lines are needed for vscode and its keyring
 eval "$(gnome-keyring-daemon --start)"
 export SSH_AUTH_SOCK
