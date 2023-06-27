@@ -126,3 +126,7 @@ eval "$(ssh-agent -s)"
 eval "$(gnome-keyring-daemon --start)"
 export SSH_AUTH_SOCK
 dbus-update-activation-environment --all
+
+# Setup pyenv
+export PATH="$HOME/.pyenv/bin:$PATH"
+eval "$(pyenv init -)"
