@@ -49,9 +49,29 @@ fi
 # {{ if eq .chezmoi.username "shadycuz" -}}
 
 #        {{- if contains "WSL" .chezmoi.kernel.osrelease }}
+
+# Setup SSH per devcontainer instructions
+# https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials
+if [ -z "$SSH_AUTH_SOCK" ]; then
+   # Check for a currently running instance of the agent
+  RUNNING_AGENT="$(ps -ax | grep 'ssh-agent -s' | grep -v grep | wc -l | tr -d '[:space:]')"
+   if [ "$RUNNING_AGENT" = "0" ]; then
+        # Launch a new instance of the agent
+        ssh-agent -s &> $HOME/.ssh/ssh-agent
+
+        # I think you have to create the ssh-agent file first
+   fi
+  eval "$(cat "$HOME/.ssh/ssh-agent")"
+
+  # Add my key so I dont get prompted for passwords
+  ssh-add ~/.ssh/id_ed25519
+fi
+
 ## Send gui to windows mobaxterm
 DISPLAY_VALUE="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
 export DISPLAY=$DISPLAY_VALUE
+
+dbus-update-activation-environment --all > /dev/null 2>&1
 
 # Add any windows binarys to path
 PATH=/mnt/c/linux/bin:$PATH
@@ -71,15 +91,6 @@ eval "$(oh-my-posh init bash --config ~/.poshthemes/atomic.omp.json)"
 # Set vscode as default editor
 export EDITOR="code --wait"
 
-# This sets up gnome keyring stuff so visual studio code can cache login
-# for settings sync
-# This is one time setup
-# sudo dbus-update-activation-environment --systemd DISPLAY
-
-# Unsure if the rest is needed (doesnt seem to be)
-# eval "$(gnome-keyring-daemon --start)"
-# eval "$(gnome-keyring-daemon --daemonize --login)"
-# export SSH_AUTH_SOCK
 # {{ end }}
 
 if command -v kubectl &> /dev/null
