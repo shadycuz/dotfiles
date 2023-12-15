@@ -50,28 +50,22 @@ fi
 
 #        {{- if contains "WSL" .chezmoi.kernel.osrelease }}
 
-# Setup SSH per devcontainer instructions
-# https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials
-if [ -z "$SSH_AUTH_SOCK" ]; then
-   # Check for a currently running instance of the agent
-  RUNNING_AGENT="$(ps -ax | grep 'ssh-agent -s' | grep -v grep | wc -l | tr -d '[:space:]')"
-   if [ "$RUNNING_AGENT" = "0" ]; then
-        # Launch a new instance of the agent
-        ssh-agent -s &> $HOME/.ssh/ssh-agent
-
-        # I think you have to create the ssh-agent file first
-   fi
-  eval "$(cat "$HOME/.ssh/ssh-agent")"
-
-  # Add my key so I dont get prompted for passwords
-  ssh-add ~/.ssh/id_ed25519
-fi
-
 ## Send gui to windows mobaxterm
 DISPLAY_VALUE="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
 export DISPLAY=$DISPLAY_VALUE
 
-dbus-update-activation-environment --all > /dev/null 2>&1
+# Things work regardless if I run this dbus stuff or not
+# dbus-update-activation-environment --all > /dev/null 2>&1
+# dbus-update-activation-environment --systemd DBUS_SESSION_BUS_ADDRESS DISPLAY
+
+# Start the gnome keyring daemon, this will autoload the ssh keys
+# I cant make it open an X window prompt so I can unlock it...
+# I have to use "seahorse" to unlock the "Login" keyring
+# from https://github.com/microsoft/WSL/discussions/9375
+if [ ! -e /run/user/$(id -u)/keyring ]; then
+  gnome-keyring-daemon -s -d > /dev/null 2>&1
+fi
+export SSH_AUTH_SOCK=/run/user/$(id -u)/keyring/ssh
 
 # Add any windows binarys to path
 PATH=/mnt/c/linux/bin:$PATH
