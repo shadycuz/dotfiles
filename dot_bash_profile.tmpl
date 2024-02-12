@@ -3,18 +3,6 @@
 # If not interactive then return
 [ -z "$PS1" ] && return
 
-# Start genie to start systemd
-if [[ ! -v INSIDE_GENIE ]]; then
-  read -t 3 -r -p "Preparing to enter genie bottle (in 3s); abort? " response
-  echo
-  response=${response:=n}
-
-  if [[ $response != "y" ]]; then
-    echo "Starting genie:"
-    exec /usr/bin/genie -s
-  fi
-fi
-
 # Stole all of this from ~/.profile
 # ~/.profile: executed by the command interpreter for login shells.
 # This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
@@ -49,10 +37,6 @@ fi
 # {{ if eq .chezmoi.username "shadycuz" -}}
 
 #        {{- if contains "WSL" .chezmoi.kernel.osrelease }}
-
-## Send gui to windows mobaxterm
-DISPLAY_VALUE="$(/sbin/ip route | awk '/default/ { print $3 }'):0.0"
-export DISPLAY=$DISPLAY_VALUE
 
 # Things work regardless if I run this dbus stuff or not
 # dbus-update-activation-environment --all > /dev/null 2>&1
