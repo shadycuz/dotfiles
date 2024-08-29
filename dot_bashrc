@@ -122,3 +122,8 @@ fi
 # Setup pyenv
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init -)"
+
+# Check if aws_completer is installed
+if [ -x "$(command -v aws_completer)" ]; then
+    complete -C "$(command -v aws_completer)" aws
+fi
